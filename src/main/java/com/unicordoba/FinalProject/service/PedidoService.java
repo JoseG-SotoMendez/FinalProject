@@ -21,18 +21,15 @@ public class PedidoService {
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private SedeRepository sedeRepository;
     @Autowired private InventarioRepository inventarioRepository;
-    // @Autowired private UsuarioRepository usuarioRepository; (Lo usaremos si implementamos login)
 
     @Transactional
     public Pedido crearPedido(PedidoDTO dto) {
 
-        // 1. Validar Cliente y Sede
         Cliente cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new RuntimeException("Sede no encontrada"));
 
-        // 2. Crear Encabezado
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
         pedido.setSede(sede);
@@ -44,30 +41,23 @@ public class PedidoService {
 
         BigDecimal totalPedido = BigDecimal.ZERO;
 
-        // 3. Procesar Items y DESCONTAR INVENTARIO
         for (DetallePedidoDTO itemDto : dto.getItems()) {
             Producto producto = productoRepository.findById(itemDto.getProductoId())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
-            // --- LÓGICA DE INVENTARIO NUEVA ---
-            // Buscamos si este producto existe en el inventario de ESTA sede
             Inventario inventario = inventarioRepository.findBySedeAndProducto(sede, producto)
                     .orElseThrow(() -> new RuntimeException("El producto " + producto.getNombre() + " no está registrado en el inventario de esta sede."));
 
-            // Verificamos si hay suficiente cantidad
             BigDecimal cantidadSolicitada = new BigDecimal(itemDto.getCantidad());
 
             if (inventario.getCantidad().compareTo(cantidadSolicitada) < 0) {
-                // Si inventario < cantidadSolicitada, lanzamos error y se cancela TODO el pedido
                 throw new RuntimeException("Stock insuficiente para: " + producto.getNombre() + ". Disponible: " + inventario.getCantidad());
             }
 
-            // Restamos del inventario
             inventario.setCantidad(inventario.getCantidad().subtract(cantidadSolicitada));
-            inventarioRepository.save(inventario); // Actualizamos el stock en BD
-            // ----------------------------------
+            inventarioRepository.save(inventario);
 
-            // Guardamos el detalle del pedido (igual que antes)
+
             OrderItem item = new OrderItem();
             item.setPedido(pedido);
             item.setProducto(producto);

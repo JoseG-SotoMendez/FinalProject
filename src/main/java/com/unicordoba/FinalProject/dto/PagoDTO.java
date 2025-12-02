@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 public class PagoDTO {
     private Integer pedidoId;
     private BigDecimal monto;
-    private String metodoPago; // EFECTIVO, TARJETA, NEQUI
+    private String metodoPago;
 }

@@ -1,0 +1,181 @@
+/* ============================================================
+   TEMA PERSONALIZADO: POS UNICÓRDOBA
+   Paleta: Azul Medianoche (Base) + Naranja (Acento)
+============================================================ */
+
+:root {
+    /* Definición de variables de color */
+    --main-brand: #2c3e50;       /* Azul oscuro profesional para barras y headers */
+    --main-brand-light: #34495e; /* Un tono un poco más claro */
+    --accent-color: #e67e22;     /* Naranja complementario para acciones principales */
+    --accent-hover: #d35400;     /* Naranja más oscuro para cuando pasas el mouse */
+    --bg-body: #f4f7f6;          /* Fondo gris claro limpio */
+    --text-dark: #2c3e50;        /* Color de texto principal */
+    --danger-red: #c0392b;       /* Un rojo más sobrio para eliminar */
+}
+
+body {
+    background-color: var(--bg-body) !important;
+    color: var(--text-dark);
+    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* Fuente más moderna */
+}
+
+/* ============================================================
+   SOBRESCRITURA DE COMPONENTES BOOTSTRAP
+   (Unificamos los colores del arcoíris en nuestra paleta)
+============================================================ */
+
+/* 1. NAVBAR SUPERIOR */
+.navbar-dark.bg-dark, .bg-primary {
+    background-color: var(--main-brand) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* 2. ENCABEZADOS DE TARJETAS (CARD HEADERS)
+   Hacemos que todos los headers (azules, verdes, amarillos) sean del color de la marca. */
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-warning,
+.card-header.bg-info,
+.card-header.bg-dark,
+.card-header.bg-secondary,
+.modal-header.bg-success,
+.table-dark {
+    background-color: var(--main-brand) !important;
+    color: white !important;
+    border-bottom: none;
+    font-weight: 600;
+}
+/* A los textos oscuros dentro de headers les forzamos color blanco */
+.card-header.bg-warning.text-dark {
+    color: white !important;
+}
+
+/* 3. BOTONES PRINCIPALES (Guardar, Confirmar, Filtrar)
+   Convertimos los botones azules y verdes en nuestro Naranja de Acento. */
+.btn-primary, .btn-success {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+    color: white !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.btn-primary:hover, .btn-success:hover {
+    background-color: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+    transform: translateY(-2px); /* Pequeño efecto de elevación */
+}
+
+/* 4. BOTONES DE ENLACE (Los de "Volver" o acciones secundarias) */
+.btn-secondary, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light {
+    background-color: transparent !important;
+    border: 2px solid var(--main-brand-light) !important;
+    color: var(--main-brand-light) !important;
+    font-weight: 600;
+}
+.btn-secondary:hover, .btn-outline-secondary:hover, .btn-outline-dark:hover, .btn-outline-light:hover {
+    background-color: var(--main-brand-light) !important;
+    color: white !important;
+}
+
+/* 5. BOTONES "NUEVO X" (En las listas)
+   Los hacemos estilo "outline" con el color de la marca para que no compitan con el botón de guardar. */
+div > a.btn-primary, div > a.btn-warning {
+    background-color: transparent !important;
+    border: 2px solid var(--accent-color) !important;
+    color: var(--accent-color) !important;
+}
+div > a.btn-primary:hover, div > a.btn-warning:hover {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+}
+
+/* 6. BOTONES DE EDICIÓN Y BORRADO (Tablas) */
+.btn-warning.btn-sm { /* Editar */
+    background-color: var(--main-brand-light) !important;
+    border-color: var(--main-brand-light) !important;
+    color: white !important;
+}
+.btn-danger.btn-sm, .btn-danger { /* Eliminar */
+    background-color: var(--danger-red) !important;
+    border-color: var(--danger-red) !important;
+}
+
+
+/* ============================================================
+   ESTILOS ESPECÍFICOS POR PÁGINA
+============================================================ */
+
+/* --- PÁGINA DE INICIO (INDEX) --- */
+/* Rediseño de las tarjetas del menú para que sean blancas y elegantes */
+.menu-card {
+    background: white !important; /* Quitamos los fondos de colores */
+    border: none;
+    border-top: 4px solid var(--main-brand); /* Un toque de color de marca arriba */
+    color: var(--text-dark) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+.menu-card:hover {
+    transform: translateY(-5px); /* Se elevan al pasar el mouse */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    border-top-color: var(--accent-color); /* La barra superior cambia al naranja de acento */
+}
+.menu-card .icon-large {
+    color: var(--main-brand); /* Iconos en azul oscuro */
+    transition: color 0.3s ease;
+}
+.menu-card:hover .icon-large {
+    color: var(--accent-color); /* Iconos cambian a naranja al pasar el mouse */
+}
+/* Limpieza de textos forzados por bootstrap */
+.menu-card.text-white, .menu-card .text-white, .menu-card .text-dark, .menu-card .card-title {
+    color: var(--text-dark) !important;
+}
+
+/* --- DASHBOARD --- */
+/* Tarjetas de KPI blancas con borde lateral de color */
+.card.bg-primary.shadow.h-100,
+.card.bg-success.shadow.h-100,
+.card.bg-danger.shadow.h-100,
+.card.bg-info.shadow.h-100 {
+    background-color: white !important;
+    color: var(--text-dark) !important;
+    border: none;
+    border-left: 6px solid var(--main-brand); /* Borde lateral azul por defecto */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+/* Diferenciamos solo el borde lateral */
+.card.bg-success.shadow.h-100 { border-left-color: var(--accent-color) !important; } /* Ingresos en Naranja */
+.card.bg-danger.shadow.h-100 { border-left-color: var(--danger-red) !important; } /* Alertas en Rojo */
+
+/* --- POS (Punto de Venta) --- */
+.total-display {
+    /* Usamos el azul oscuro de fondo y el naranja vibrante para el total */
+    background-color: var(--main-brand) !important;
+    color: var(--accent-color) !important;
+    border: 2px solid var(--main-brand-light);
+    font-family: 'Courier New', monospace; /* Fuente tipo ticket */
+    text-shadow: 0 0 5px rgba(230, 126, 34, 0.3); /* Pequeño brillo en el texto */
+}
+/* El botón de Cobrar gigante en el POS */
+.btn-primary.w-100.btn-lg {
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* --- TABLAS Y FORMULARIOS --- */
+.card.shadow, .table.shadow, .table-responsive.shadow-sm {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important; /* Sombras más suaves */
+    border: none;
+}
+.form-control:focus, .form-select:focus {
+    /* Cuando haces clic en un input, el borde se pone del color de acento */
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 0.25rem rgba(230, 126, 34, 0.25);
+}

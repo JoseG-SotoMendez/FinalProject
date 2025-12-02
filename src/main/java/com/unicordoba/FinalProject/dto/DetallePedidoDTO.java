@@ -6,5 +6,5 @@ import lombok.Data;
 public class DetallePedidoDTO {
     private Integer productoId;
     private Integer cantidad;
-    private String observaciones; // Ej: "Sin cebolla"
+    private String observaciones;
 }

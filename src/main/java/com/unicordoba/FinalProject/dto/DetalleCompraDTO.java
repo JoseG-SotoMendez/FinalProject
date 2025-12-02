@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 public class DetalleCompraDTO {
     private Integer productoId;
     private BigDecimal cantidad;
-    private BigDecimal costoUnitario; // A cuánto nos lo vendió el proveedor
+    private BigDecimal costoUnitario;
 }

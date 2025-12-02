@@ -23,13 +23,12 @@ public class CompraService {
 
     @Transactional
     public Compra registrarCompra(CompraDTO dto) {
-        // 1. Validar Proveedor y Sede
+
         Proveedor proveedor = proveedorRepository.findById(dto.getProveedorId())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
         Sede sede = sedeRepository.findById(dto.getSedeId())
                 .orElseThrow(() -> new RuntimeException("Sede no encontrada"));
 
-        // 2. Crear Encabezado de Compra
         Compra compra = new Compra();
         compra.setProveedor(proveedor);
         compra.setSede(sede);
@@ -41,18 +40,16 @@ public class CompraService {
 
         BigDecimal totalCompra = BigDecimal.ZERO;
 
-        // 3. Procesar Items y SUMAR AL INVENTARIO
+
         for (DetalleCompraDTO itemDto : dto.getItems()) {
             Producto producto = productoRepository.findById(itemDto.getProductoId())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado ID: " + itemDto.getProductoId()));
 
-            // --- LÓGICA DE INVENTARIO (SUMAR) ---
-            // Buscamos si ya existe inventario de este producto en esta sede
             Inventario inventario = inventarioRepository.findBySedeAndProducto(sede, producto)
                     .orElse(null);
 
             if (inventario == null) {
-                // ¡Caso Nuevo! Si no existe, lo creamos desde cero
+
                 inventario = new Inventario();
                 inventario.setSede(sede);
                 inventario.setProducto(producto);
@@ -60,19 +57,15 @@ public class CompraService {
                 inventario.setUnidad("UNIDAD");
             }
 
-            // Sumamos la cantidad comprada al stock actual
             inventario.setCantidad(inventario.getCantidad().add(itemDto.getCantidad()));
             inventarioRepository.save(inventario);
-            // -------------------------------------
 
-            // Guardar detalle de compra
             PurchaseItem item = new PurchaseItem();
             item.setCompra(compra);
             item.setProducto(producto);
             item.setCantidad(itemDto.getCantidad());
             item.setPrecioUnitario(itemDto.getCostoUnitario());
 
-            // Subtotal = Cantidad * Costo
             BigDecimal subtotal = itemDto.getCantidad().multiply(itemDto.getCostoUnitario());
             item.setSubtotal(subtotal);
 
@@ -80,7 +73,6 @@ public class CompraService {
             totalCompra = totalCompra.add(subtotal);
         }
 
-        // 4. Actualizar total final
         compra.setTotal(totalCompra);
         return compraRepository.save(compra);
     }

@@ -14,8 +14,6 @@ public interface InventarioRepository extends JpaRepository<Inventario, Integer>
 
     @Query("SELECT COUNT(i) FROM Inventario i WHERE i.cantidad < 10")
     Long contarProductosBajoStock();
-
-    // SQL automático: SELECT * FROM inventario WHERE sede_id = ? AND producto_id = ?
     Optional<Inventario> findBySedeAndProducto(Sede sede, Producto producto);
 
 

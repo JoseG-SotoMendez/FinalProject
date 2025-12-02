@@ -7,7 +7,7 @@ import java.util.List;
 public class PedidoDTO {
     private Integer clienteId;
     private Integer sedeId;
-    private Integer usuarioId; // El cajero
-    private String tipo; // MESA, DOMICILIO
-    private List<DetallePedidoDTO> items; // La lista de productos
+    private Integer usuarioId;
+    private String tipo;
+    private List<DetallePedidoDTO> items;
 }

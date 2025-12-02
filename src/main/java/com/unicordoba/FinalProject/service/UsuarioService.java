@@ -18,7 +18,7 @@ public class UsuarioService {
     public Optional<Usuario> obtenerPorId(Integer id) { return usuarioRepository.findById(id); }
 
     public Usuario guardar(Usuario usuario) {
-        // Aquí podrías agregar lógica para encriptar contraseña si quisieras
+
         return usuarioRepository.save(usuario);
     }
 

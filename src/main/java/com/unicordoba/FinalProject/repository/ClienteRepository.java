@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
 
-    // Consulta SQL Pro: Busca coincidencias parciales ignorando mayúsculas/minúsculas
+
     @Query("SELECT c FROM Cliente c WHERE " +
             "(:nombre IS NULL OR LOWER(c.nombre) LIKE LOWER(CONCAT('%', :nombre, '%'))) AND " +
             "(:email IS NULL OR LOWER(c.email) LIKE LOWER(CONCAT('%', :email, '%'))) AND " +

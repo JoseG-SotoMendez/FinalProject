@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 
 @Data
 public class DashboardDTO {
-    private Long totalVentasDia;      // Cuántos pedidos hoy
-    private BigDecimal ingresosDia;   // Cuánto dinero hoy
-    private Long productosBajoStock;  // Alerta de inventario
+    private Long totalVentasDia;
+    private BigDecimal ingresosDia;
+    private Long productosBajoStock;
     private Long clientesRegistrados;
 }

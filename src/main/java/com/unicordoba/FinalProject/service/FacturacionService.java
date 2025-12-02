@@ -22,7 +22,7 @@ public class FacturacionService {
 
     @Transactional
     public Factura registrarPago(PagoDTO pagoDTO) {
-        // 1. Buscar el pedido
+
         Pedido pedido = pedidoRepository.findById(pagoDTO.getPedidoId())
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado"));
 
@@ -30,27 +30,24 @@ public class FacturacionService {
             throw new RuntimeException("Este pedido ya fue pagado anteriormente.");
         }
 
-        // 2. Registrar el Pago
+
         Pago pago = new Pago();
         pago.setPedido(pedido);
         pago.setMonto(pagoDTO.getMonto());
         pago.setMetodoPago(pagoDTO.getMetodoPago());
         pago.setEstadoPago("APROBADO");
-        pago.setReferenciaTransaccion(UUID.randomUUID().toString()); // Simulamos un código de banco
+        pago.setReferenciaTransaccion(UUID.randomUUID().toString());
         pagoRepository.save(pago);
 
-        // 3. Actualizar estado del Pedido
-        // (Aquí podrías validar si el monto pago >= total pedido, pero asumiremos que sí)
+
         pedido.setEstado("PAGADO");
         pedidoRepository.save(pedido);
 
-        // 4. Generar la Factura Automáticamente
         Factura factura = new Factura();
         factura.setPedido(pedido);
         factura.setCliente(pedido.getCliente());
         factura.setValorTotal(pedido.getTotal());
         factura.setEstado("VIGENTE");
-        // Generamos un número de factura simple (Ej: FAC-12345)
         factura.setNumeroFactura("FAC-" + System.currentTimeMillis());
 
         return facturaRepository.save(factura);

@@ -14,18 +14,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-@Controller // Esto indica que devolvemos Vistas HTML
+@Controller
 public class WebController {
 
-    // --- SERVICIOS ---
     @Autowired private ProductoService productoService;
     @Autowired private ClienteService clienteService;
     @Autowired private SedeService sedeService;
     @Autowired private CompraService compraService;
     @Autowired private PromocionService promocionService;
     @Autowired private UsuarioService usuarioService;
-
-    // --- REPOSITORIOS (Para listar directamente) ---
     @Autowired private ProductoRepository productoRepository;
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private PedidoRepository pedidoRepository;
@@ -38,7 +35,6 @@ public class WebController {
 
     @Autowired private com.unicordoba.FinalProject.repository.ProveedorRepository proveedorRepository;
 
-    // ================= INICIO Y DASHBOARD =================
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("titulo", "Sistema POS - Unicórdoba");
@@ -54,11 +50,9 @@ public class WebController {
         stats.setClientesRegistrados(clienteRepository.count());
         model.addAttribute("stats", stats);
 
-        // Datos para Gráfico 1: Ventas por día
         List<Object[]> ventasData = pedidoRepository.obtenerVentasUltimosDias();
         model.addAttribute("graficoVentas", ventasData);
 
-        // Datos para Gráfico 2: Productos Top
         List<Object[]> productosTop = orderItemRepository.obtenerProductosMasVendidos();
         model.addAttribute("graficoProductos", productosTop);
 
@@ -73,7 +67,6 @@ public class WebController {
         return "nueva_compra"; // Vamos a crear este archivo ahora
     }
 
-    // ================= 1. PRODUCTOS (Editar y Eliminar) =================
     @GetMapping("/web/productos")
     public String listarProductos(
             @RequestParam(required = false) String nombre,
@@ -100,7 +93,6 @@ public class WebController {
         return "nuevo_producto";
     }
 
-    // EDITAR PRODUCTO: Cargamos el producto por ID y reutilizamos el formulario
     @GetMapping("/web/productos/editar/{id}")
     public String editarProducto(@PathVariable Integer id, Model model) {
         Producto p = productoService.obtenerPorId(id).orElse(null);
@@ -108,7 +100,6 @@ public class WebController {
         return "nuevo_producto";
     }
 
-    // ELIMINAR PRODUCTO
     @GetMapping("/web/productos/eliminar/{id}")
     public String eliminarProducto(@PathVariable Integer id) {
         productoService.eliminarProducto(id);
@@ -121,9 +112,6 @@ public class WebController {
         return "redirect:/web/productos";
     }
 
-    // ==========================================
-    // SECCIÓN 2: CLIENTES
-    // ==========================================
     @GetMapping("/web/clientes")
     public String listarClientes(
             @RequestParam(required = false) String nombre,
@@ -135,9 +123,6 @@ public class WebController {
         if (nombre == null && email == null && telefono == null) {
             lista = clienteService.obtenerTodos();
         } else {
-            // Usamos el repositorio directamente para filtrar (necesitas inyectar clienteRepository arriba si usas el servicio solo para guardar)
-            // Ojo: Para simplificar, llama al repositorio aquí, o crea el método en el servicio.
-            // Asumiré que inyectas el repositorio o agregas el método en ClienteService.
             lista = clienteRepository.buscarConFiltros(nombre, email, telefono);
         }
 
@@ -164,9 +149,7 @@ public class WebController {
         return "redirect:/web/clientes";
     }
 
-    // ==========================================
-    // SECCIÓN 3: SEDES
-    // ==========================================
+
     @GetMapping("/web/sedes")
     public String listarSedes(
             @RequestParam(required = false) String ciudad,
@@ -208,9 +191,6 @@ public class WebController {
         return "redirect:/web/sedes";
     }
 
-    // ==========================================
-    // SECCIÓN 4: PROVEEDORES
-    // ==========================================
     @GetMapping("/web/proveedores")
     public String listarProveedores(
             @RequestParam(required = false) String nombre,
@@ -252,7 +232,6 @@ public class WebController {
         return "redirect:/web/proveedores";
     }
 
-    // ================= 5. POS =================
     @GetMapping("/web/pos")
     public String pantallaPos(Model model) {
         model.addAttribute("listaProductos", productoService.obtenerTodos());
@@ -263,15 +242,12 @@ public class WebController {
         return "pos";
     }
 
-    // ================= 6. NUEVAS SECCIONES (HISTORIALES) =================
-
     @GetMapping("/web/inventario")
     public String listarInventario(Model model) {
         model.addAttribute("listaInventario", inventarioRepository.findAll());
         return "inventario"; // inventario.html
     }
 
-    // --- HISTORIAL VENTAS (FACTURAS) CON FILTRO ---
     @GetMapping("/web/historial/ventas")
     public String historialVentas(
             @RequestParam(required = false) LocalDate inicio,
@@ -289,7 +265,6 @@ public class WebController {
         return "historial_ventas";
     }
 
-    // --- HISTORIAL COMPRAS CON FILTRO ---
     @GetMapping("/web/historial/compras")
     public String historialCompras(
             @RequestParam(required = false) LocalDate inicio,
@@ -326,19 +301,16 @@ public class WebController {
         return "historial_pagos";
     }
 
-    // ==========================================
-// SECCIÓN 7: GESTIÓN DE PROMOCIONES
-// ==========================================
     @GetMapping("/web/promociones")
     public String listarPromociones(Model model) {
         model.addAttribute("listaPromociones", promocionService.obtenerTodas());
-        return "promociones"; // promociones.html
+        return "promociones";
     }
 
     @GetMapping("/web/promociones/nuevo")
     public String formPromocion(Model model) {
         model.addAttribute("promocion", new Promocion());
-        return "nueva_promocion"; // nueva_promocion.html
+        return "nueva_promocion";
     }
 
     @GetMapping("/web/promociones/editar/{id}")
@@ -360,9 +332,6 @@ public class WebController {
         return "redirect:/web/promociones";
     }
 
-    // ==========================================
-// SECCIÓN 8: GESTIÓN DE USUARIOS
-// ==========================================
     @GetMapping("/web/usuarios")
     public String listarUsuarios(Model model) {
         model.addAttribute("listaUsuarios", usuarioService.obtenerTodos());
@@ -374,7 +343,7 @@ public class WebController {
         Usuario u = new Usuario();
         u.setActivo(true); // Activo por defecto
         model.addAttribute("usuario", u);
-        return "nuevo_usuario"; // nuevo_usuario.html
+        return "nuevo_usuario";
     }
 
     @GetMapping("/web/usuarios/editar/{id}")

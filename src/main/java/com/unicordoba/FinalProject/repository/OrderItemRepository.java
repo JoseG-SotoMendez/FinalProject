@@ -10,7 +10,6 @@ import java.util.List;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Integer> {
 
-    // Gráfico de Productos Más Vendidos (Top 5)
     @Query("SELECT i.producto.nombre, SUM(i.cantidad) as totalVendido " +
             "FROM OrderItem i GROUP BY i.producto.nombre " +
             "ORDER BY totalVendido DESC LIMIT 5")
