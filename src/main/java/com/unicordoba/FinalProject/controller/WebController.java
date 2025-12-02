@@ -1,6 +1,11 @@
 package com.unicordoba.FinalProject.controller;
 
+import com.unicordoba.FinalProject.dto.DashboardDTO;
 import com.unicordoba.FinalProject.entity.Producto;
+import com.unicordoba.FinalProject.repository.ClienteRepository;
+import com.unicordoba.FinalProject.repository.InventarioRepository;
+import com.unicordoba.FinalProject.repository.PedidoRepository;
+import com.unicordoba.FinalProject.repository.ProductoRepository;
 import com.unicordoba.FinalProject.service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller; // ¡OJO! No es RestController
@@ -10,15 +15,19 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import com.unicordoba.FinalProject.entity.*;
 import com.unicordoba.FinalProject.service.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Controller // Esto indica que devolvemos Vistas HTML
 public class WebController {
 
     // --- INYECCIÓN DE SERVICIOS ---
+    @Autowired private PedidoRepository pedidoRepository;
+    @Autowired private ProductoRepository productoRepository;
+    @Autowired private InventarioRepository inventarioRepository;
+    @Autowired private ClienteRepository clienteRepository;
     @Autowired private ProductoService productoService;
     @Autowired private ClienteService clienteService;   // <--- Agrega esto
     @Autowired private SedeService sedeService;         // <--- Agrega esto
@@ -36,10 +45,25 @@ public class WebController {
 
     // Cuando entres a http://localhost:8080/productos
     @GetMapping("/web/productos")
-    public String listarProductos(Model model) {
-        // Buscamos todos los productos de la BD
-        model.addAttribute("listaProductos", productoService.obtenerTodos());
-        return "productos"; // Esto busca productos.html
+    public String listarProductos(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) BigDecimal minPrecio,
+            @RequestParam(required = false) BigDecimal maxPrecio,
+            @RequestParam(required = false) Boolean activo,
+            Model model) {
+
+        List<Producto> resultados;
+
+        // Si todos son nulos, traemos todo (findAll)
+        if (nombre == null && minPrecio == null && maxPrecio == null && activo == null) {
+            resultados = productoService.obtenerTodos();
+        } else {
+            // Si hay algún filtro, usamos la consulta avanzada
+            resultados = productoRepository.buscarProductosAvanzado(nombre, minPrecio, maxPrecio, activo);
+        }
+
+        model.addAttribute("listaProductos", resultados);
+        return "productos";
     }
 
     // 1. Mostrar el formulario vacío
@@ -55,6 +79,18 @@ public class WebController {
     public String guardarProducto(@ModelAttribute("producto") Producto producto) {
         productoService.guardarProducto(producto);
         return "redirect:/web/productos";
+    }
+
+    @GetMapping("/web/dashboard")
+    public String dashboard(Model model) {
+        DashboardDTO stats = new DashboardDTO();
+        stats.setTotalVentasDia(pedidoRepository.contarVentasHoy());
+        stats.setIngresosDia(pedidoRepository.sumarIngresosHoy());
+        stats.setProductosBajoStock(inventarioRepository.contarProductosBajoStock());
+        stats.setClientesRegistrados(clienteRepository.count());
+
+        model.addAttribute("stats", stats);
+        return "dashboard"; // dashboard.html
     }
 
     // ==========================================

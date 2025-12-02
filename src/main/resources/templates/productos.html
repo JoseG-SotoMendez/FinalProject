@@ -15,6 +15,32 @@
         </div>
     </div>
 
+    <div class="card mb-4 p-3 bg-light border">
+        <h5 class="mb-3">🔍 Filtros Avanzados</h5>
+        <form action="/web/productos" method="GET" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="nombre" class="form-control" placeholder="Nombre del producto...">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="minPrecio" class="form-control" placeholder="Precio Min">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="maxPrecio" class="form-control" placeholder="Precio Max">
+            </div>
+            <div class="col-md-2">
+                <select name="activo" class="form-select">
+                    <option value="" selected>Todos los estados</option>
+                    <option value="true">Solo Activos</option>
+                    <option value="false">Solo Inactivos</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-grid gap-2 d-md-block">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <a href="/web/productos" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
     <table class="table table-striped table-hover shadow-sm">
         <thead class="table-dark">
         <tr>

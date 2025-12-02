@@ -8,6 +8,39 @@
         .total-box { font-size: 2rem; font-weight: bold; color: #198754; }
     </style>
 </head>
+<div class="modal fade" id="modalPago" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">💸 Registrar Pago</h5>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pagoPedidoId">
+                <div class="mb-3">
+                    <label>Total a Pagar</label>
+                    <input type="text" id="pagoTotalDisplay" class="form-control" readonly style="font-weight: bold; font-size: 1.5rem;">
+                </div>
+                <div class="mb-3">
+                    <label>Método de Pago</label>
+                    <select id="pagoMetodo" class="form-select">
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TARJETA">Tarjeta</option>
+                        <option value="NEQUI">Nequi / Daviplata</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label>Monto Recibido</label>
+                    <input type="number" id="pagoMonto" class="form-control" placeholder="Ingrese valor">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="procesarPago()">Confirmar Pago</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <body class="bg-light">
 
 <nav class="navbar navbar-dark bg-dark mb-4">
@@ -206,50 +239,64 @@
         renderizarTabla();
     }
 
-    // 5. Función FINAL: Enviar todo al Backend (Java)
+    // Variable para guardar el pedido temporalmente
+    let pedidoActualId = null;
+
     function finalizarVenta() {
-        if (carrito.length === 0) {
-            alert("El carrito está vacío");
-            return;
-        }
+        if (carrito.length === 0) { alert("Carrito vacío"); return; }
 
-        if (!confirm("¿Seguro que desea procesar la venta?")) return;
-
-        // Armamos el JSON tal cual lo pide PedidoDTO en Java
+        // 1. Crear el Pedido (PENDIENTE)
         const pedidoDTO = {
             clienteId: parseInt(document.getElementById("selectCliente").value),
             sedeId: parseInt(document.getElementById("selectSede").value),
             tipo: document.getElementById("selectTipo").value,
-            items: carrito // El backend espera una lista de "DetallePedidoDTO"
+            items: carrito
         };
 
-        // Usamos FETCH para enviar los datos sin recargar página
         fetch('/api/pedidos', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(pedidoDTO)
         })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    return response.text().then(text => { throw new Error(text) });
-                }
-            })
+            .then(r => r.ok ? r.json() : r.text().then(t => {throw new Error(t)}))
             .then(data => {
-                alert("✅ ¡Venta registrada con éxito! ID Pedido: " + data.pedidoId);
-                // Limpiar todo o redirigir
-                carrito = [];
-                renderizarTabla();
-                window.location.reload(); // Recargar para limpiar
+                // ¡ÉXITO! El pedido existe. Ahora abrimos el modal para pagar.
+                pedidoActualId = data.pedidoId; // Guardamos el ID
+
+                // Preparamos el modal
+                document.getElementById("pagoPedidoId").value = pedidoActualId;
+                document.getElementById("pagoTotalDisplay").value = "$ " + data.total;
+                document.getElementById("pagoMonto").value = data.total; // Sugerimos el total exacto
+
+                // Mostramos el modal (usando Bootstrap JS)
+                new bootstrap.Modal(document.getElementById('modalPago')).show();
             })
-            .catch(error => {
-                console.error("Error:", error);
-                // Mostramos el mensaje de error del backend (Ej: Stock insuficiente)
-                alert("❌ Error al procesar venta: " + error.message);
-            });
+            .catch(e => alert("❌ Error al crear pedido: " + e.message));
+    }
+
+    function procesarPago() {
+        const pagoDTO = {
+            pedidoId: pedidoActualId,
+            monto: parseFloat(document.getElementById("pagoMonto").value),
+            metodoPago: document.getElementById("pagoMetodo").value
+        };
+
+        fetch('/api/pagos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(pagoDTO)
+        })
+            .then(r => r.ok ? r.json() : r.text().then(t => {throw new Error(t)}))
+            .then(factura => {
+                alert("✅ ¡Pago Exitoso! Factura N°: " + factura.numeroFactura);
+                window.location.reload(); // Recargar página para nueva venta
+            })
+            .catch(e => alert("❌ Error al pagar: " + e.message));
+    }
+
+    function cerrarModalPago() {
+        // Si cierra sin pagar, el pedido queda como PENDIENTE en la BD
+        window.location.reload();
     }
 
     // Poner la fecha de hoy
