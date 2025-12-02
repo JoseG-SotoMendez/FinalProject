@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Inventario de Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>📦 Listado de Productos</h2>
+        <div>
+            <a href="/web/productos/nuevo" class="btn btn-success">+ Nuevo Producto</a>
+            <a href="/" class="btn btn-outline-primary">Volver al Inicio</a>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Tipo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="prod : ${listaProductos}">
+            <td th:text="${prod.productoId}">1</td>
+            <td th:text="${prod.codigo}">CÓDIGO</td>
+            <td th:text="${prod.nombre}">Nombre Producto</td>
+            <td th:text="${'$ ' + prod.precioBase}">$ 0.00</td>
+
+            <td>
+                <span class="badge bg-info" th:text="${prod.tipo}">TIPO</span>
+            </td>
+
+            <td>
+                <span th:if="${prod.activo}" class="badge bg-success">Activo</span>
+                <span th:unless="${prod.activo}" class="badge bg-danger">Inactivo</span>
+            </td>
+
+            <td>
+                <button class="btn btn-sm btn-warning">Editar</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div th:if="${listaProductos.empty}" class="alert alert-warning text-center">
+        No hay productos registrados en el sistema.
+    </div>
+</div>
+
+</body>
+</html>
