@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Registrar Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">📉 Registrar Compra (Abastecimiento)</h4>
+            <a href="/" class="btn btn-outline-dark btn-sm">Volver al Menú</a>
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Proveedor</label>
+                    <select id="selectProveedor" class="form-select">
+                        <option value="">-- Seleccione Proveedor --</option>
+                        <option th:each="p : ${listaProveedores}" th:value="${p.proveedorId}" th:text="${p.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Sede de Destino</label>
+                    <select id="selectSede" class="form-select">
+                        <option value="">-- Seleccione Sede --</option>
+                        <option th:each="s : ${listaSedes}" th:value="${s.sedeId}" th:text="${s.nombre}"></option>
+                    </select>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row align-items-end mb-3">
+                <div class="col-md-5">
+                    <label>Producto</label>
+                    <select id="selectProducto" class="form-select">
+                        <option value="">-- Seleccione Producto --</option>
+                        <option th:each="p : ${listaProductos}"
+                                th:value="${p.productoId}"
+                                th:text="${p.nombre}"
+                                th:data-nombre="${p.nombre}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Costo Unitario ($)</label>
+                    <input type="number" id="inputCosto" class="form-control" placeholder="0.00">
+                </div>
+                <div class="col-md-2">
+                    <label>Cantidad</label>
+                    <input type="number" id="inputCantidad" class="form-control" value="1" min="1">
+                </div>
+                <div class="col-md-2">
+                    <button onclick="agregarItem()" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Agregar
+                    </button>
+                </div>
+            </div>
+
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                <tr>
+                    <th>Producto</th>
+                    <th>Costo Unit.</th>
+                    <th>Cantidad</th>
+                    <th>Subtotal</th>
+                    <th>Acción</th>
+                </tr>
+                </thead>
+                <tbody id="tablaItems">
+                </tbody>
+            </table>
+
+            <div class="d-flex justify-content-end align-items-center">
+                <h3 class="me-3">Total Compra: <span id="totalCompra" class="text-primary">$ 0.00</span></h3>
+                <button onclick="guardarCompra()" class="btn btn-success btn-lg">FINALIZAR COMPRA</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let listaItems = [];
+
+    function agregarItem() {
+        const selectProd = document.getElementById("selectProducto");
+        const costo = parseFloat(document.getElementById("inputCosto").value);
+        const cantidad = parseInt(document.getElementById("inputCantidad").value);
+
+        if (!selectProd.value || isNaN(costo) || isNaN(cantidad) || cantidad < 1) {
+            alert("Complete todos los campos del producto correctamente.");
+            return;
+        }
+
+        const item = {
+            productoId: parseInt(selectProd.value),
+            nombre: selectProd.options[selectProd.selectedIndex].getAttribute("data-nombre"),
+            costoUnitario: costo,
+            cantidad: cantidad,
+            subtotal: costo * cantidad
+        };
+
+        listaItems.push(item);
+        renderizar();
+
+        // Limpiar inputs
+        document.getElementById("inputCosto").value = "";
+        document.getElementById("inputCantidad").value = "1";
+    }
+
+    function renderizar() {
+        const tbody = document.getElementById("tablaItems");
+        tbody.innerHTML = "";
+        let total = 0;
+
+        listaItems.forEach((item, idx) => {
+            total += item.subtotal;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td>$ ${item.costoUnitario}</td>
+                    <td>${item.cantidad}</td>
+                    <td>$ ${item.subtotal}</td>
+                    <td><button onclick="eliminar(${idx})" class="btn btn-sm btn-danger">X</button></td>
+                </tr>`;
+        });
+        document.getElementById("totalCompra").innerText = "$ " + total;
+    }
+
+    function eliminar(idx) {
+        listaItems.splice(idx, 1);
+        renderizar();
+    }
+
+    function guardarCompra() {
+        const provId = document.getElementById("selectProveedor").value;
+        const sedeId = document.getElementById("selectSede").value;
+
+        if (!provId || !sedeId || listaItems.length === 0) {
+            alert("Seleccione Proveedor, Sede y agregue al menos un producto.");
+            return;
+        }
+
+        const compraDTO = {
+            proveedorId: parseInt(provId),
+            sedeId: parseInt(sedeId),
+            items: listaItems
+        };
+
+        fetch('/api/compras', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(compraDTO)
+        })
+            .then(r => r.ok ? r.json() : r.text().then(t => {throw new Error(t)}))
+            .then(data => {
+                alert("✅ Compra registrada. El inventario ha sido actualizado.");
+                window.location.href = "/web/inventario"; // Redirigir a ver el stock
+            })
+            .catch(e => alert("Error: " + e.message));
+    }
+</script>
+
+</body>
+</html>

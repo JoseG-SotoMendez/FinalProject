@@ -52,6 +52,14 @@ public class WebController {
         return "dashboard";
     }
 
+    @GetMapping("/web/compras/nueva")
+    public String formNuevaCompra(Model model) {
+        model.addAttribute("listaProveedores", proveedorRepository.findAll());
+        model.addAttribute("listaSedes", sedeService.obtenerTodas());
+        model.addAttribute("listaProductos", productoService.obtenerTodos());
+        return "nueva_compra"; // Vamos a crear este archivo ahora
+    }
+
     // ================= 1. PRODUCTOS (Editar y Eliminar) =================
     @GetMapping("/web/productos")
     public String listarProductos(

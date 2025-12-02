@@ -1,41 +1,146 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Sistema POS</title>
+    <title>Sistema POS - Panel Principal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .menu-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+        }
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .icon-large { font-size: 3rem; margin-bottom: 15px; }
+        .card-title { font-weight: 600; }
+        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
+    </style>
 </head>
-<body class="bg-light">
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-shop-window me-2"></i> SISTEMA POS
+        </a>
+        <span class="navbar-text text-white">
+            <i class="bi bi-person-circle"></i> Admin: José & Miguel
+        </span>
+    </div>
+</nav>
 
 <div class="container mt-5">
-    <div class="card text-center shadow">
-        <div class="card-header bg-primary text-white">
-            Sistema POS - Base de Datos 2
-        </div>
-        <div class="card-body">
-            <h1 class="card-title" th:text="${titulo}">SYSTEM POS</h1>
-            <p class="card-text">Gestión de Ventas, Inventario y Facturación</p>
 
-            <div class="d-grid gap-2 d-sm-flex justify-content-center mt-4 flex-wrap">
-                <a href="/web/pos" class="btn btn-dark btn-lg">🛒 Ir al POS</a>
-                <a href="/web/dashboard" class="btn btn-info btn-lg">📊 Dashboard</a>
-                <a href="/web/sedes" class="btn btn-secondary btn-lg">🏢 Sedes</a>
-                <a href="/web/productos" class="btn btn-success btn-lg">📦 Productos</a>
-                <a href="/web/clientes" class="btn btn-primary btn-lg">👥 Clientes</a>
-                <a href="/web/proveedores" class="btn btn-warning btn-lg">🚛 Proveedores</a>
-            </div>
+    <div class="text-center mb-5">
+        <h2 class="display-6">Bienvenido al Panel de Control</h2>
+        <p class="text-muted">Seleccione una opción para gestionar su negocio</p>
+    </div>
 
-            <div class="w-100 mt-3"></div> <a href="/web/inventario" class="btn btn-outline-primary">📦 Inventario</a>
-            <a href="/web/historial/ventas" class="btn btn-outline-success">📜 Facturas</a>
-            <a href="/web/historial/compras" class="btn btn-outline-danger">📉 Compras</a>
-            <a href="/web/historial/pagos" class="btn btn-outline-secondary">💸 Pagos</a>
+    <h5 class="text-muted mb-3"><i class="bi bi-play-circle"></i> Operaciones Diarias</h5>
+    <div class="row g-4 mb-5">
+
+        <div class="col-md-4">
+            <a href="/web/pos" class="text-decoration-none">
+                <div class="card menu-card bg-primary text-white h-100 p-3 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-cart4 icon-large"></i>
+                        <h4 class="card-title">Punto de Venta</h4>
+                        <p class="card-text opacity-75">Registrar nuevas ventas y pedidos.</p>
+                    </div>
+                </div>
+            </a>
         </div>
 
+        <div class="col-md-4">
+            <a href="/web/compras/nueva" class="text-decoration-none">
+                <div class="card menu-card bg-warning text-dark h-100 p-3 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-box-seam icon-large"></i>
+                        <h4 class="card-title">Abastecimiento</h4>
+                        <p class="card-text opacity-75">Registrar compras a proveedores.</p>
+                    </div>
+                </div>
+            </a>
         </div>
-        <div class="card-footer text-muted">
-            José Gil & Miguel Guerra - 2025
+
+        <div class="col-md-4">
+            <a href="/web/dashboard" class="text-decoration-none">
+                <div class="card menu-card bg-info text-white h-100 p-3 text-center">
+                    <div class="card-body">
+                        <i class="bi bi-bar-chart-line icon-large"></i>
+                        <h4 class="card-title">Reportes & KPIs</h4>
+                        <p class="card-text opacity-75">Ver estadísticas en tiempo real.</p>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
+
+    <h5 class="text-muted mb-3"><i class="bi bi-gear"></i> Administración</h5>
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <a href="/web/productos" class="text-decoration-none text-dark">
+                <div class="card menu-card h-100 text-center p-3 border-start border-5 border-success">
+                    <i class="bi bi-tags fs-1 text-success"></i>
+                    <h5 class="mt-2">Productos</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/web/inventario" class="text-decoration-none text-dark">
+                <div class="card menu-card h-100 text-center p-3 border-start border-5 border-danger">
+                    <i class="bi bi-boxes fs-1 text-danger"></i>
+                    <h5 class="mt-2">Inventario</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/web/clientes" class="text-decoration-none text-dark">
+                <div class="card menu-card h-100 text-center p-3 border-start border-5 border-primary">
+                    <i class="bi bi-people fs-1 text-primary"></i>
+                    <h5 class="mt-2">Clientes</h5>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="/web/sedes" class="text-decoration-none text-dark">
+                <div class="card menu-card h-100 text-center p-3 border-start border-5 border-secondary">
+                    <i class="bi bi-building fs-1 text-secondary"></i>
+                    <h5 class="mt-2">Sedes</h5>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <h5 class="text-muted mb-3"><i class="bi bi-clock-history"></i> Historiales</h5>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <a href="/web/historial/ventas" class="btn btn-outline-secondary w-100 py-3">
+                <i class="bi bi-receipt me-2"></i> Historial de Facturas
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/web/historial/compras" class="btn btn-outline-secondary w-100 py-3">
+                <i class="bi bi-bag-check me-2"></i> Historial de Compras
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/web/historial/pagos" class="btn btn-outline-secondary w-100 py-3">
+                <i class="bi bi-cash-stack me-2"></i> Historial de Pagos
+            </a>
+        </div>
+    </div>
+
 </div>
+
+<footer class="mt-5 py-3 bg-light text-center text-muted">
+    <small>Sistema POS v1.0 &copy; 2025 - Ingeniería de Sistemas Unicórdoba</small>
+</footer>
 
 </body>
 </html>
