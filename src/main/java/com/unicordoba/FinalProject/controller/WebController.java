@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller // Esto indica que devolvemos Vistas HTML
@@ -21,11 +22,14 @@ public class WebController {
     @Autowired private ClienteService clienteService;
     @Autowired private SedeService sedeService;
     @Autowired private CompraService compraService;
+    @Autowired private PromocionService promocionService;
+    @Autowired private UsuarioService usuarioService;
 
     // --- REPOSITORIOS (Para listar directamente) ---
     @Autowired private ProductoRepository productoRepository;
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private PedidoRepository pedidoRepository;
+    @Autowired private OrderItemRepository orderItemRepository;
     @Autowired private InventarioRepository inventarioRepository;
     @Autowired private SedeRepository sedeRepository;
     @Autowired private FacturaRepository facturaRepository;
@@ -49,6 +53,15 @@ public class WebController {
         stats.setProductosBajoStock(inventarioRepository.contarProductosBajoStock());
         stats.setClientesRegistrados(clienteRepository.count());
         model.addAttribute("stats", stats);
+
+        // Datos para Gráfico 1: Ventas por día
+        List<Object[]> ventasData = pedidoRepository.obtenerVentasUltimosDias();
+        model.addAttribute("graficoVentas", ventasData);
+
+        // Datos para Gráfico 2: Productos Top
+        List<Object[]> productosTop = orderItemRepository.obtenerProductosMasVendidos();
+        model.addAttribute("graficoProductos", productosTop);
+
         return "dashboard";
     }
 
@@ -245,6 +258,8 @@ public class WebController {
         model.addAttribute("listaProductos", productoService.obtenerTodos());
         model.addAttribute("listaClientes", clienteService.obtenerTodos());
         model.addAttribute("listaSedes", sedeService.obtenerTodas());
+        // Agregamos las promociones activas
+        model.addAttribute("listaPromociones", promocionService.obtenerTodas());
         return "pos";
     }
 
@@ -256,21 +271,129 @@ public class WebController {
         return "inventario"; // inventario.html
     }
 
+    // --- HISTORIAL VENTAS (FACTURAS) CON FILTRO ---
+    @GetMapping("/web/historial/ventas")
+    public String historialVentas(
+            @RequestParam(required = false) LocalDate inicio,
+            @RequestParam(required = false) LocalDate fin,
+            @RequestParam(required = false) String estado,
+            Model model) {
+
+        List<Factura> lista;
+        if (inicio == null && fin == null && estado == null) {
+            lista = facturaRepository.findAll();
+        } else {
+            lista = facturaRepository.filtrarFacturas(inicio, fin, estado);
+        }
+        model.addAttribute("listaFacturas", lista);
+        return "historial_ventas";
+    }
+
+    // --- HISTORIAL COMPRAS CON FILTRO ---
     @GetMapping("/web/historial/compras")
-    public String historialCompras(Model model) {
-        model.addAttribute("listaCompras", compraRepository.findAll());
-        return "historial_compras"; // historial_compras.html
+    public String historialCompras(
+            @RequestParam(required = false) LocalDate inicio,
+            @RequestParam(required = false) LocalDate fin,
+            @RequestParam(required = false) Integer proveedorId,
+            Model model) {
+
+        List<Compra> lista;
+        if (inicio == null && fin == null && proveedorId == null) {
+            lista = compraRepository.findAll();
+        } else {
+            lista = compraRepository.filtrarCompras(inicio, fin, proveedorId);
+        }
+        model.addAttribute("listaCompras", lista);
+        model.addAttribute("proveedores", proveedorRepository.findAll()); // Para el select
+        return "historial_compras";
     }
 
-    @GetMapping("/web/historial/ventas") // Facturas
-    public String historialVentas(Model model) {
-        model.addAttribute("listaFacturas", facturaRepository.findAll());
-        return "historial_ventas"; // historial_ventas.html
-    }
-
+    // --- HISTORIAL PAGOS CON FILTRO ---
     @GetMapping("/web/historial/pagos")
-    public String historialPagos(Model model) {
-        model.addAttribute("listaPagos", pagoRepository.findAll());
-        return "historial_pagos"; // historial_pagos.html
+    public String historialPagos(
+            @RequestParam(required = false) LocalDate inicio,
+            @RequestParam(required = false) LocalDate fin,
+            @RequestParam(required = false) String metodo,
+            Model model) {
+
+        List<Pago> lista;
+        if (inicio == null && fin == null && metodo == null) {
+            lista = pagoRepository.findAll();
+        } else {
+            lista = pagoRepository.filtrarPagos(inicio, fin, metodo);
+        }
+        model.addAttribute("listaPagos", lista);
+        return "historial_pagos";
     }
+
+    // ==========================================
+// SECCIÓN 7: GESTIÓN DE PROMOCIONES
+// ==========================================
+    @GetMapping("/web/promociones")
+    public String listarPromociones(Model model) {
+        model.addAttribute("listaPromociones", promocionService.obtenerTodas());
+        return "promociones"; // promociones.html
+    }
+
+    @GetMapping("/web/promociones/nuevo")
+    public String formPromocion(Model model) {
+        model.addAttribute("promocion", new Promocion());
+        return "nueva_promocion"; // nueva_promocion.html
+    }
+
+    @GetMapping("/web/promociones/editar/{id}")
+    public String editarPromocion(@PathVariable Integer id, Model model) {
+        Promocion p = promocionService.obtenerPorId(id).orElse(null);
+        model.addAttribute("promocion", p);
+        return "nueva_promocion";
+    }
+
+    @GetMapping("/web/promociones/eliminar/{id}")
+    public String eliminarPromocion(@PathVariable Integer id) {
+        promocionService.eliminar(id);
+        return "redirect:/web/promociones";
+    }
+
+    @PostMapping("/web/promociones/guardar")
+    public String guardarPromocion(@ModelAttribute("promocion") Promocion promocion) {
+        promocionService.guardar(promocion);
+        return "redirect:/web/promociones";
+    }
+
+    // ==========================================
+// SECCIÓN 8: GESTIÓN DE USUARIOS
+// ==========================================
+    @GetMapping("/web/usuarios")
+    public String listarUsuarios(Model model) {
+        model.addAttribute("listaUsuarios", usuarioService.obtenerTodos());
+        return "usuarios"; // usuarios.html
+    }
+
+    @GetMapping("/web/usuarios/nuevo")
+    public String formUsuario(Model model) {
+        Usuario u = new Usuario();
+        u.setActivo(true); // Activo por defecto
+        model.addAttribute("usuario", u);
+        return "nuevo_usuario"; // nuevo_usuario.html
+    }
+
+    @GetMapping("/web/usuarios/editar/{id}")
+    public String editarUsuario(@PathVariable Integer id, Model model) {
+        Usuario u = usuarioService.obtenerPorId(id).orElse(null);
+        model.addAttribute("usuario", u);
+        return "nuevo_usuario";
+    }
+
+    @GetMapping("/web/usuarios/eliminar/{id}")
+    public String eliminarUsuario(@PathVariable Integer id) {
+        usuarioService.eliminar(id);
+        return "redirect:/web/usuarios";
+    }
+
+    @PostMapping("/web/usuarios/guardar")
+    public String guardarUsuario(@ModelAttribute("usuario") Usuario usuario) {
+        usuarioService.guardar(usuario);
+        return "redirect:/web/usuarios";
+    }
+
 }

@@ -1,22 +1,73 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Historial Compras</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head>
+<head>
+    <title>Historial de Compras</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 <body class="container mt-5">
-<h2>📉 Historial de Compras (Gastos)</h2>
-<a href="/" class="btn btn-secondary mb-3">Volver</a>
-<table class="table table-bordered">
-    <thead class="table-dark"><tr><th>ID</th><th>Fecha</th><th>Proveedor</th><th>Sede Destino</th><th>Total</th><th>Estado</th></tr></thead>
-    <tbody>
-    <tr th:each="c : ${listaCompras}">
-        <td th:text="${c.compraId}"></td>
-        <td th:text="${c.fecha}"></td>
-        <td th:text="${c.proveedor.nombre}"></td>
-        <td th:text="${c.sede.nombre}"></td>
-        <td th:text="${'$ ' + c.total}"></td>
-        <td th:text="${c.estado}"></td>
-    </tr>
-    </tbody>
-</table>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>📉 Historial de Compras (Gastos)</h2>
+    <a href="/" class="btn btn-secondary">Volver al Menú</a>
+</div>
+
+<div class="card p-3 mb-3 bg-light border-0 shadow-sm">
+    <form action="/web/historial/compras" method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Desde</label>
+            <input type="date" name="inicio" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Hasta</label>
+            <input type="date" name="fin" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Proveedor</label>
+            <select name="proveedorId" class="form-select">
+                <option value="">-- Todos --</option>
+                <option th:each="p : ${proveedores}"
+                        th:value="${p.proveedorId}"
+                        th:text="${p.nombre}"></option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-filter"></i> Filtrar Resultados
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive shadow-sm">
+    <table class="table table-bordered table-hover mb-0">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Sede Destino</th>
+            <th>Total</th>
+            <th>Estado</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="c : ${listaCompras}">
+            <td th:text="${c.compraId}"></td>
+            <td th:text="${#temporals.format(c.fecha, 'dd-MM-yyyy HH:mm')}"></td>
+            <td th:text="${c.proveedor.nombre}"></td>
+            <td th:text="${c.sede.nombre}"></td>
+            <td th:text="${'$ ' + c.total}" class="fw-bold text-danger"></td>
+            <td>
+                <span class="badge bg-success" th:text="${c.estado}"></span>
+            </td>
+        </tr>
+        <tr th:if="${listaCompras.empty}">
+            <td colspan="6" class="text-center py-3 text-muted">
+                No se encontraron compras con estos filtros.
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>
