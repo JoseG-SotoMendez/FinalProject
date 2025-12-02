@@ -9,6 +9,9 @@
     <div class="card-header bg-primary text-white"><h4>Registrar Cliente</h4></div>
     <div class="card-body">
         <form th:action="@{/web/clientes/guardar}" th:object="${cliente}" method="POST">
+
+            <input type="hidden" th:field="*{clienteId}" />
+
             <div class="mb-3"><label>Nombre Completo</label><input type="text" class="form-control" th:field="*{nombre}" required></div>
             <div class="mb-3"><label>Teléfono</label><input type="text" class="form-control" th:field="*{telefono}"></div>
             <div class="mb-3"><label>Email</label><input type="email" class="form-control" th:field="*{email}"></div>

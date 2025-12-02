@@ -9,6 +9,9 @@
     <div class="card-header bg-primary text-white"><h4>Registrar Sede</h4></div>
     <div class="card-body">
         <form th:action="@{/web/sedes/guardar}" th:object="${sede}" method="POST">
+
+            <input type="hidden" th:field="*{sedeId}" />
+
             <div class="mb-3"><label>Nombre Sede</label><input type="text" class="form-control" th:field="*{nombre}" required></div>
             <div class="mb-3"><label>Dirección</label><input type="text" class="form-control" th:field="*{direccion}"></div>
             <div class="mb-3"><label>Ciudad</label><input type="text" class="form-control" th:field="*{ciudad}"></div>

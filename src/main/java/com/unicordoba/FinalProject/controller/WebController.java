@@ -1,20 +1,13 @@
 package com.unicordoba.FinalProject.controller;
 
 import com.unicordoba.FinalProject.dto.DashboardDTO;
-import com.unicordoba.FinalProject.entity.Producto;
-import com.unicordoba.FinalProject.repository.ClienteRepository;
-import com.unicordoba.FinalProject.repository.InventarioRepository;
-import com.unicordoba.FinalProject.repository.PedidoRepository;
-import com.unicordoba.FinalProject.repository.ProductoRepository;
-import com.unicordoba.FinalProject.service.ProductoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller; // ¡OJO! No es RestController
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 import com.unicordoba.FinalProject.entity.*;
+import com.unicordoba.FinalProject.repository.*;
 import com.unicordoba.FinalProject.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -23,62 +16,29 @@ import java.util.List;
 @Controller // Esto indica que devolvemos Vistas HTML
 public class WebController {
 
-    // --- INYECCIÓN DE SERVICIOS ---
-    @Autowired private PedidoRepository pedidoRepository;
-    @Autowired private ProductoRepository productoRepository;
-    @Autowired private InventarioRepository inventarioRepository;
-    @Autowired private ClienteRepository clienteRepository;
+    // --- SERVICIOS ---
     @Autowired private ProductoService productoService;
-    @Autowired private ClienteService clienteService;   // <--- Agrega esto
-    @Autowired private SedeService sedeService;         // <--- Agrega esto
-    @Autowired private CompraService compraService;     // (Para más adelante)
-    // Nota: Necesitamos acceder al repositorio de proveedores para listarlos
+    @Autowired private ClienteService clienteService;
+    @Autowired private SedeService sedeService;
+    @Autowired private CompraService compraService;
+
+    // --- REPOSITORIOS (Para listar directamente) ---
+    @Autowired private ProductoRepository productoRepository;
+    @Autowired private ClienteRepository clienteRepository;
+    @Autowired private PedidoRepository pedidoRepository;
+    @Autowired private InventarioRepository inventarioRepository;
+    @Autowired private SedeRepository sedeRepository;
+    @Autowired private FacturaRepository facturaRepository;
+    @Autowired private CompraRepository compraRepository;
+    @Autowired private PagoRepository pagoRepository;
+
     @Autowired private com.unicordoba.FinalProject.repository.ProveedorRepository proveedorRepository;
 
-    // Cuando entres a http://localhost:8080/ (la raíz)
+    // ================= INICIO Y DASHBOARD =================
     @GetMapping("/")
     public String index(Model model) {
-        // "model" es como una mochila donde metemos cosas para llevar al HTML
-        model.addAttribute("titulo", "Bienvenido al Sistema POS - Unicórdoba");
-        return "index"; // Esto busca un archivo llamado index.html
-    }
-
-    // Cuando entres a http://localhost:8080/productos
-    @GetMapping("/web/productos")
-    public String listarProductos(
-            @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) BigDecimal minPrecio,
-            @RequestParam(required = false) BigDecimal maxPrecio,
-            @RequestParam(required = false) Boolean activo,
-            Model model) {
-
-        List<Producto> resultados;
-
-        // Si todos son nulos, traemos todo (findAll)
-        if (nombre == null && minPrecio == null && maxPrecio == null && activo == null) {
-            resultados = productoService.obtenerTodos();
-        } else {
-            // Si hay algún filtro, usamos la consulta avanzada
-            resultados = productoRepository.buscarProductosAvanzado(nombre, minPrecio, maxPrecio, activo);
-        }
-
-        model.addAttribute("listaProductos", resultados);
-        return "productos";
-    }
-
-    // 1. Mostrar el formulario vacío
-    @GetMapping("/web/productos/nuevo")
-    public String mostrarFormularioProducto(Model model) {
-        Producto producto = new Producto();
-        producto.setActivo(true); // Por defecto que salga activo
-        model.addAttribute("producto", producto);
-        return "nuevo_producto"; // Buscaremos el archivo nuevo_producto.html
-    }
-
-    @PostMapping("/web/productos/guardar")
-    public String guardarProducto(@ModelAttribute("producto") Producto producto) {
-        productoService.guardarProducto(producto);
-        return "redirect:/web/productos";
+        model.addAttribute("titulo", "Sistema POS - Unicórdoba");
+        return "index";
     }
 
     @GetMapping("/web/dashboard")
@@ -88,24 +48,93 @@ public class WebController {
         stats.setIngresosDia(pedidoRepository.sumarIngresosHoy());
         stats.setProductosBajoStock(inventarioRepository.contarProductosBajoStock());
         stats.setClientesRegistrados(clienteRepository.count());
-
         model.addAttribute("stats", stats);
-        return "dashboard"; // dashboard.html
+        return "dashboard";
+    }
+
+    // ================= 1. PRODUCTOS (Editar y Eliminar) =================
+    @GetMapping("/web/productos")
+    public String listarProductos(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) BigDecimal minPrecio,
+            @RequestParam(required = false) BigDecimal maxPrecio,
+            @RequestParam(required = false) Boolean activo,
+            Model model) {
+
+        List<Producto> resultados;
+        if (nombre == null && minPrecio == null && maxPrecio == null && activo == null) {
+            resultados = productoService.obtenerTodos();
+        } else {
+            resultados = productoRepository.buscarProductosAvanzado(nombre, minPrecio, maxPrecio, activo);
+        }
+        model.addAttribute("listaProductos", resultados);
+        return "productos";
+    }
+
+    @GetMapping("/web/productos/nuevo")
+    public String formProducto(Model model) {
+        Producto p = new Producto();
+        p.setActivo(true);
+        model.addAttribute("producto", p);
+        return "nuevo_producto";
+    }
+
+    // EDITAR PRODUCTO: Cargamos el producto por ID y reutilizamos el formulario
+    @GetMapping("/web/productos/editar/{id}")
+    public String editarProducto(@PathVariable Integer id, Model model) {
+        Producto p = productoService.obtenerPorId(id).orElse(null);
+        model.addAttribute("producto", p);
+        return "nuevo_producto";
+    }
+
+    // ELIMINAR PRODUCTO
+    @GetMapping("/web/productos/eliminar/{id}")
+    public String eliminarProducto(@PathVariable Integer id) {
+        productoService.eliminarProducto(id);
+        return "redirect:/web/productos";
+    }
+
+    @PostMapping("/web/productos/guardar")
+    public String guardarProducto(@ModelAttribute("producto") Producto producto) {
+        productoService.guardarProducto(producto);
+        return "redirect:/web/productos";
     }
 
     // ==========================================
     // SECCIÓN 2: CLIENTES
     // ==========================================
     @GetMapping("/web/clientes")
-    public String listarClientes(Model model) {
-        model.addAttribute("listaClientes", clienteService.obtenerTodos());
-        return "clientes"; // Archivo clientes.html
+    public String listarClientes(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String telefono,
+            Model model) {
+
+        List<Cliente> lista;
+        if (nombre == null && email == null && telefono == null) {
+            lista = clienteService.obtenerTodos();
+        } else {
+            // Usamos el repositorio directamente para filtrar (necesitas inyectar clienteRepository arriba si usas el servicio solo para guardar)
+            // Ojo: Para simplificar, llama al repositorio aquí, o crea el método en el servicio.
+            // Asumiré que inyectas el repositorio o agregas el método en ClienteService.
+            lista = clienteRepository.buscarConFiltros(nombre, email, telefono);
+        }
+
+        model.addAttribute("listaClientes", lista);
+        return "clientes";
     }
 
-    @GetMapping("/web/clientes/nuevo")
-    public String formCliente(Model model) {
-        model.addAttribute("cliente", new Cliente());
-        return "nuevo_cliente"; // Archivo nuevo_cliente.html
+    @GetMapping("/web/clientes/editar/{id}")
+    public String editarCliente(@PathVariable Integer id, Model model) {
+        Cliente c = clienteService.obtenerPorId(id).orElse(null);
+        model.addAttribute("cliente", c);
+        return "nuevo_cliente";
+    }
+
+    @GetMapping("/web/clientes/eliminar/{id}")
+    public String eliminarCliente(@PathVariable Integer id) {
+        clienteService.eliminarCliente(id);
+        return "redirect:/web/clientes";
     }
 
     @PostMapping("/web/clientes/guardar")
@@ -118,15 +147,38 @@ public class WebController {
     // SECCIÓN 3: SEDES
     // ==========================================
     @GetMapping("/web/sedes")
-    public String listarSedes(Model model) {
-        model.addAttribute("listaSedes", sedeService.obtenerTodas());
-        return "sedes"; // Archivo sedes.html
+    public String listarSedes(
+            @RequestParam(required = false) String ciudad,
+            @RequestParam(required = false) String nombre,
+            Model model) {
+
+        List<Sede> lista;
+        if (ciudad == null && nombre == null) {
+            lista = sedeService.obtenerTodas();
+        } else {
+            lista = sedeRepository.buscarPorCiudadYNombre(ciudad, nombre);
+        }
+        model.addAttribute("listaSedes", lista);
+        return "sedes";
     }
 
     @GetMapping("/web/sedes/nuevo")
     public String formSede(Model model) {
         model.addAttribute("sede", new Sede());
-        return "nueva_sede"; // Archivo nueva_sede.html
+        return "nueva_sede";
+    }
+
+    @GetMapping("/web/sedes/editar/{id}")
+    public String editarSede(@PathVariable Integer id, Model model) {
+        Sede s = sedeService.obtenerPorId(id).orElse(null);
+        model.addAttribute("sede", s);
+        return "nueva_sede";
+    }
+
+    @GetMapping("/web/sedes/eliminar/{id}")
+    public String eliminarSede(@PathVariable Integer id) {
+        sedeService.eliminarSede(id);
+        return "redirect:/web/sedes";
     }
 
     @PostMapping("/web/sedes/guardar")
@@ -139,15 +191,38 @@ public class WebController {
     // SECCIÓN 4: PROVEEDORES
     // ==========================================
     @GetMapping("/web/proveedores")
-    public String listarProveedores(Model model) {
-        model.addAttribute("listaProveedores", proveedorRepository.findAll());
-        return "proveedores"; // Archivo proveedores.html
+    public String listarProveedores(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String contacto,
+            Model model) {
+
+        List<Proveedor> lista;
+        if (nombre == null && contacto == null) {
+            lista = proveedorRepository.findAll();
+        } else {
+            lista = proveedorRepository.buscarAvanzado(nombre, contacto);
+        }
+        model.addAttribute("listaProveedores", lista);
+        return "proveedores";
     }
 
     @GetMapping("/web/proveedores/nuevo")
     public String formProveedor(Model model) {
         model.addAttribute("proveedor", new Proveedor());
-        return "nuevo_proveedor"; // Archivo nuevo_proveedor.html
+        return "nuevo_proveedor";
+    }
+
+    @GetMapping("/web/proveedores/editar/{id}")
+    public String editarProveedor(@PathVariable Integer id, Model model) {
+        Proveedor p = proveedorRepository.findById(id).orElse(null);
+        model.addAttribute("proveedor", p);
+        return "nuevo_proveedor";
+    }
+
+    @GetMapping("/web/proveedores/eliminar/{id}")
+    public String eliminarProveedor(@PathVariable Integer id) {
+        proveedorRepository.deleteById(id);
+        return "redirect:/web/proveedores";
     }
 
     @PostMapping("/web/proveedores/guardar")
@@ -156,18 +231,38 @@ public class WebController {
         return "redirect:/web/proveedores";
     }
 
-    // ==========================================
-    // SECCIÓN 5: POS (PUNTO DE VENTA)
-    // ==========================================
+    // ================= 5. POS =================
     @GetMapping("/web/pos")
     public String pantallaPos(Model model) {
-        // Cargamos todas las listas necesarias para los desplegables (selects)
         model.addAttribute("listaProductos", productoService.obtenerTodos());
         model.addAttribute("listaClientes", clienteService.obtenerTodos());
         model.addAttribute("listaSedes", sedeService.obtenerTodas());
-
-        // (Opcional) Si quieres pre-seleccionar el usuario cajero, podrías pasarlo aquí
-        return "pos"; // Busca el archivo pos.html
+        return "pos";
     }
 
+    // ================= 6. NUEVAS SECCIONES (HISTORIALES) =================
+
+    @GetMapping("/web/inventario")
+    public String listarInventario(Model model) {
+        model.addAttribute("listaInventario", inventarioRepository.findAll());
+        return "inventario"; // inventario.html
+    }
+
+    @GetMapping("/web/historial/compras")
+    public String historialCompras(Model model) {
+        model.addAttribute("listaCompras", compraRepository.findAll());
+        return "historial_compras"; // historial_compras.html
+    }
+
+    @GetMapping("/web/historial/ventas") // Facturas
+    public String historialVentas(Model model) {
+        model.addAttribute("listaFacturas", facturaRepository.findAll());
+        return "historial_ventas"; // historial_ventas.html
+    }
+
+    @GetMapping("/web/historial/pagos")
+    public String historialPagos(Model model) {
+        model.addAttribute("listaPagos", pagoRepository.findAll());
+        return "historial_pagos"; // historial_pagos.html
+    }
 }

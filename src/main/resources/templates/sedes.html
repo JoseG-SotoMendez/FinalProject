@@ -12,9 +12,24 @@
         <a href="/" class="btn btn-outline-secondary">Inicio</a>
     </div>
 </div>
+
+<div class="card mb-3 bg-light p-3">
+    <form action="/web/sedes" method="GET" class="row g-2">
+        <div class="col-md-5">
+            <input type="text" name="nombre" class="form-control" placeholder="Nombre Sede...">
+        </div>
+        <div class="col-md-5">
+            <input type="text" name="ciudad" class="form-control" placeholder="Filtrar por Ciudad...">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">🔍 Filtrar</button>
+        </div>
+    </form>
+</div>
+
 <table class="table table-bordered shadow bg-white">
     <thead class="table-dark">
-    <tr><th>ID</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Horario</th></tr>
+    <tr><th>ID</th><th>Nombre</th><th>Ciudad</th><th>Teléfono</th><th>Horario</th><th>Acciones</th></tr>
     </thead>
     <tbody>
     <tr th:each="s : ${listaSedes}">
@@ -23,6 +38,10 @@
         <td th:text="${s.ciudad}"></td>
         <td th:text="${s.telefono}"></td>
         <td th:text="${s.horario}"></td>
+        <td>
+            <a th:href="@{/web/sedes/editar/{id}(id=${s.sedeId})}" class="btn btn-sm btn-warning">✏️</a>
+            <a th:href="@{/web/sedes/eliminar/{id}(id=${s.sedeId})}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar sede?')">🗑️</a>
+        </td>
     </tr>
     </tbody>
 </table>

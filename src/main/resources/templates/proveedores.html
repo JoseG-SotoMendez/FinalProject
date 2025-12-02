@@ -12,9 +12,24 @@
         <a href="/" class="btn btn-outline-secondary">Inicio</a>
     </div>
 </div>
+
+<div class="card mb-3 bg-light p-3">
+    <form action="/web/proveedores" method="GET" class="row g-2">
+        <div class="col-md-5">
+            <input type="text" name="nombre" class="form-control" placeholder="Nombre Empresa...">
+        </div>
+        <div class="col-md-5">
+            <input type="text" name="contacto" class="form-control" placeholder="Nombre Contacto...">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">🔍 Filtrar</button>
+        </div>
+    </form>
+</div>
+
 <table class="table table-bordered shadow bg-white">
     <thead class="table-dark">
-    <tr><th>ID</th><th>Empresa</th><th>Contacto</th><th>Teléfono</th><th>Email</th></tr>
+    <tr><th>ID</th><th>Empresa</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr>
     </thead>
     <tbody>
     <tr th:each="p : ${listaProveedores}">
@@ -23,6 +38,10 @@
         <td th:text="${p.contacto}"></td>
         <td th:text="${p.telefono}"></td>
         <td th:text="${p.email}"></td>
+        <td>
+            <a th:href="@{/web/proveedores/editar/{id}(id=${p.proveedorId})}" class="btn btn-sm btn-warning">✏️</a>
+            <a th:href="@{/web/proveedores/eliminar/{id}(id=${p.proveedorId})}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar proveedor?')">🗑️</a>
+        </td>
     </tr>
     </tbody>
 </table>

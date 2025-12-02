@@ -70,7 +70,8 @@
             </td>
 
             <td>
-                <button class="btn btn-sm btn-warning">Editar</button>
+                <a th:href="@{/web/productos/editar/{id}(id=${prod.productoId})}" class="btn btn-sm btn-warning">✏️</a>
+                <a th:href="@{/web/productos/eliminar/{id}(id=${prod.productoId})}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar producto?')">🗑️</a>
             </td>
         </tr>
         </tbody>

@@ -9,6 +9,9 @@
     <div class="card-header bg-warning text-dark"><h4>Registrar Proveedor</h4></div>
     <div class="card-body">
         <form th:action="@{/web/proveedores/guardar}" th:object="${proveedor}" method="POST">
+
+            <input type="hidden" th:field="*{proveedorId}" />
+
             <div class="mb-3"><label>Nombre Empresa</label><input type="text" class="form-control" th:field="*{nombre}" required></div>
             <div class="mb-3"><label>Contacto</label><input type="text" class="form-control" th:field="*{contacto}"></div>
             <div class="mb-3"><label>Teléfono</label><input type="text" class="form-control" th:field="*{telefono}"></div>
