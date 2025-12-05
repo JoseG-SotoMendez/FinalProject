@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +23,7 @@ public class WebController {
     @Autowired private CompraService compraService;
     @Autowired private PromocionService promocionService;
     @Autowired private UsuarioService usuarioService;
+
     @Autowired private ProductoRepository productoRepository;
     @Autowired private ClienteRepository clienteRepository;
     @Autowired private PedidoRepository pedidoRepository;
@@ -32,8 +33,9 @@ public class WebController {
     @Autowired private FacturaRepository facturaRepository;
     @Autowired private CompraRepository compraRepository;
     @Autowired private PagoRepository pagoRepository;
-
-    @Autowired private com.unicordoba.FinalProject.repository.ProveedorRepository proveedorRepository;
+    @Autowired private ProveedorRepository proveedorRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private PromocionRepository promocionRepository;
 
     @GetMapping("/")
     public String index(Model model) {
@@ -41,6 +43,7 @@ public class WebController {
         return "index";
     }
 
+    /*
     @GetMapping("/web/dashboard")
     public String dashboard(Model model) {
         DashboardDTO stats = new DashboardDTO();
@@ -56,6 +59,21 @@ public class WebController {
         List<Object[]> productosTop = orderItemRepository.obtenerProductosMasVendidos();
         model.addAttribute("graficoProductos", productosTop);
 
+        return "dashboard";
+    }
+
+     */
+
+    @GetMapping("/web/dashboard")
+    public String dashboard(Model model) {
+        DashboardDTO stats = new DashboardDTO();
+        stats.setTotalVentasDia(pedidoRepository.contarVentasHoy());
+        stats.setIngresosDia(pedidoRepository.sumarIngresosHoy());
+        stats.setProductosBajoStock(inventarioRepository.contarProductosBajoStock());
+        stats.setClientesRegistrados(clienteRepository.count());
+        model.addAttribute("stats", stats);
+        model.addAttribute("graficoVentas", pedidoRepository.obtenerVentasUltimosDias());
+        model.addAttribute("graficoProductos", orderItemRepository.obtenerProductosMasVendidos());
         return "dashboard";
     }
 
@@ -101,8 +119,13 @@ public class WebController {
     }
 
     @GetMapping("/web/productos/eliminar/{id}")
-    public String eliminarProducto(@PathVariable Integer id) {
-        productoService.eliminarProducto(id);
+    public String eliminarProducto(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            productoService.eliminarProducto(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Producto eliminado.");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "No se puede eliminar: Hay inventario o ventas de este producto.");
+        }
         return "redirect:/web/productos";
     }
 
@@ -138,8 +161,13 @@ public class WebController {
     }
 
     @GetMapping("/web/clientes/eliminar/{id}")
-    public String eliminarCliente(@PathVariable Integer id) {
-        clienteService.eliminarCliente(id);
+    public String eliminarCliente(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            clienteService.eliminarCliente(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Cliente eliminado.");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "No se puede eliminar: El cliente tiene facturas asociadas.");
+        }
         return "redirect:/web/clientes";
     }
 
@@ -180,8 +208,13 @@ public class WebController {
     }
 
     @GetMapping("/web/sedes/eliminar/{id}")
-    public String eliminarSede(@PathVariable Integer id) {
-        sedeService.eliminarSede(id);
+    public String eliminarSede(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            sedeService.eliminarSede(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Sede eliminada.");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "No se puede eliminar: La sede tiene historial de movimientos.");
+        }
         return "redirect:/web/sedes";
     }
 
@@ -221,8 +254,13 @@ public class WebController {
     }
 
     @GetMapping("/web/proveedores/eliminar/{id}")
-    public String eliminarProveedor(@PathVariable Integer id) {
-        proveedorRepository.deleteById(id);
+    public String eliminarProveedor(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            proveedorRepository.deleteById(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Proveedor eliminado.");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "No se puede eliminar: Hay compras asociadas a este proveedor.");
+        }
         return "redirect:/web/proveedores";
     }
 
@@ -243,9 +281,48 @@ public class WebController {
     }
 
     @GetMapping("/web/inventario")
-    public String listarInventario(Model model) {
-        model.addAttribute("listaInventario", inventarioRepository.findAll());
-        return "inventario"; // inventario.html
+    public String listarInventario(
+            @RequestParam(required = false) Integer sedeId,
+            @RequestParam(required = false) String producto,
+            Model model) {
+
+        List<Inventario> lista = (sedeId == null && producto == null) ?
+                inventarioRepository.findAll() : inventarioRepository.filtrarInventario(sedeId, producto);
+
+        model.addAttribute("listaInventario", lista);
+        model.addAttribute("sedes", sedeService.obtenerTodas()); // Para el filtro
+        return "inventario";
+    }
+
+    @GetMapping("/web/inventario/editar/{id}")
+    public String editarInventario(@PathVariable Integer id, Model model) {
+        Inventario inv = inventarioRepository.findById(id).orElse(null);
+        model.addAttribute("inventario", inv);
+        return "editar_inventario"; // Vista nueva
+    }
+
+    @PostMapping("/web/inventario/guardar")
+    public String guardarInventario(@ModelAttribute("inventario") Inventario inventario, RedirectAttributes ra) {
+        // Ojo: Solo guardamos cantidad y unidad para no romper integridad de producto/sede
+        Inventario existente = inventarioRepository.findById(inventario.getInventarioId()).orElse(null);
+        if(existente != null) {
+            existente.setCantidad(inventario.getCantidad());
+            existente.setUnidad(inventario.getUnidad());
+            inventarioRepository.save(existente);
+            ra.addFlashAttribute("mensaje", "Inventario actualizado manualmente.");
+        }
+        return "redirect:/web/inventario";
+    }
+
+    @GetMapping("/web/inventario/eliminar/{id}")
+    public String eliminarInventario(@PathVariable Integer id, RedirectAttributes ra) {
+        try {
+            inventarioRepository.deleteById(id);
+            ra.addFlashAttribute("mensaje", "Registro de inventario eliminado.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Error al eliminar.");
+        }
+        return "redirect:/web/inventario";
     }
 
     @GetMapping("/web/historial/ventas")
@@ -283,7 +360,6 @@ public class WebController {
         return "historial_compras";
     }
 
-    // --- HISTORIAL PAGOS CON FILTRO ---
     @GetMapping("/web/historial/pagos")
     public String historialPagos(
             @RequestParam(required = false) LocalDate inicio,
@@ -301,9 +377,47 @@ public class WebController {
         return "historial_pagos";
     }
 
+    @GetMapping("/web/historial/ventas/eliminar/{id}")
+    public String eliminarFactura(@PathVariable Integer id, RedirectAttributes ra) {
+        try {
+            facturaRepository.deleteById(id);
+            ra.addFlashAttribute("mensaje", "Factura eliminada.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "No se puede eliminar la factura.");
+        }
+        return "redirect:/web/historial/ventas";
+    }
+
+    @GetMapping("/web/historial/pagos/eliminar/{id}")
+    public String eliminarPago(@PathVariable Integer id, RedirectAttributes ra) {
+        try {
+            pagoRepository.deleteById(id);
+            ra.addFlashAttribute("mensaje", "Pago eliminado.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "No se puede eliminar el pago.");
+        }
+        return "redirect:/web/historial/pagos";
+    }
+
+    @GetMapping("/web/historial/compras/eliminar/{id}")
+    public String eliminarCompra(@PathVariable Integer id, RedirectAttributes ra) {
+        try {
+            compraRepository.deleteById(id);
+            ra.addFlashAttribute("mensaje", "Compra eliminada.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "No se puede eliminar la compra (tiene items asociados).");
+        }
+        return "redirect:/web/historial/compras";
+    }
+
     @GetMapping("/web/promociones")
-    public String listarPromociones(Model model) {
-        model.addAttribute("listaPromociones", promocionService.obtenerTodas());
+    public String listarPromociones(
+            @RequestParam(required = false) String codigo,
+            @RequestParam(required = false) String tipo,
+            Model model) {
+        List<Promocion> lista = (codigo == null && tipo == null) ?
+                promocionService.obtenerTodas() : promocionRepository.filtrar(codigo, tipo);
+        model.addAttribute("listaPromociones", lista);
         return "promociones";
     }
 
@@ -353,15 +467,31 @@ public class WebController {
         return "nuevo_usuario";
     }
 
-    @GetMapping("/web/usuarios/eliminar/{id}")
-    public String eliminarUsuario(@PathVariable Integer id) {
-        usuarioService.eliminar(id);
-        return "redirect:/web/usuarios";
-    }
-
     @PostMapping("/web/usuarios/guardar")
     public String guardarUsuario(@ModelAttribute("usuario") Usuario usuario) {
         usuarioService.guardar(usuario);
+        return "redirect:/web/usuarios";
+    }
+
+    @GetMapping("/web/usuarios")
+    public String listarUsuarios(
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String rol,
+            Model model) {
+        List<Usuario> lista = (username == null && rol == null) ?
+                usuarioService.obtenerTodos() : usuarioRepository.filtrar(username, rol);
+        model.addAttribute("listaUsuarios", lista);
+        return "usuarios";
+    }
+
+    @GetMapping("/web/usuarios/eliminar/{id}")
+    public String eliminarUsuario(@PathVariable Integer id, RedirectAttributes redirectAttrs) {
+        try {
+            usuarioService.eliminar(id);
+            redirectAttrs.addFlashAttribute("mensaje", "Usuario eliminado correctamente.");
+        } catch (Exception e) {
+            redirectAttrs.addFlashAttribute("error", "No se puede eliminar: El usuario tiene ventas o registros asociados.");
+        }
         return "redirect:/web/usuarios";
     }
 
